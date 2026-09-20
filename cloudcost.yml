@@ -1,0 +1,39 @@
+version: "1"
+
+pipeline:
+  name: local-test-pipeline
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: test_billing
+    type: local.csv
+    config:
+      path: ./data/sample.csv
+
+transforms:
+  - name: normalize_costs
+    type: focus.normalize
+    input: test_billing
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/cloudcost.duckdb
+
+loads:
+  - input: normalize_costs
+    destination: local_duckdb
+    table: fact_cost
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: unallocated-costs
+    type: sql
+    query_file: policies/unallocated_costs.sql
+    severity: high
