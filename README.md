@@ -67,6 +67,24 @@ transforms:
 
 This was verified end-to-end against a real Azure Cost Management export (215 real cost line items, `cloudcost sync` + `cloudcost policy run` both succeeding and producing real findings) — see `cloudcost.azure-real.yml` for the full working example. AWS/OCI/Alibaba each need their own `column_map` matched to their real export schema; none of those have been verified against live data yet.
 
+**Independently re-verified from a completely fresh clone** (new `git clone`, new `uv venv`, new `uv pip install -e .`, no leftover state) against the same live export, confirming the fix isn't an artifact of the environment it was written in:
+
+```text
+Extracting from source: azure_billing
+  -> Extracted 215 rows
+Transforming data: normalize_costs
+  -> Transformed 215 rows
+Loading data to destination: local_duckdb
+  -> Loaded 215 rows into local_duckdb
+
+Evaluating policy: unallocated-costs
+  -> Generated 0 findings.
+Evaluating policy: zero-utilization
+  -> Generated 6 findings.
+```
+
+Real breakdown from that data: **$50.50 total** across the resource group's lifetime, with **Azure Bastion alone at $26.02 — 52% of total spend** — the same always-on-cost-concentration pattern flagged in the [Open Cloud Cost Intelligence](https://github.com/raphgm/cloud-cost-intelligence) project, now caught independently by this tool's `zero-utilization` policy against Virtual Machines (6 findings, $0.21–$1.00 each).
+
 ## Architecture
 
 CloudCost utilizes a layered plugin architecture. The CLI is built on **Typer** and **Rich**. Data is extracted via provider plugins directly into **PyArrow** tables, transformed in-memory, and synced to **DuckDB** or other data warehouses. Policies are executed directly against the warehouse to generate evidence-backed FinOps findings.
