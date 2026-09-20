@@ -85,6 +85,8 @@ Evaluating policy: zero-utilization
 
 Real breakdown from that data: **$50.50 total** across the resource group's lifetime, with **Azure Bastion alone at $26.02 — 52% of total spend** — the same always-on-cost-concentration pattern flagged in the [Open Cloud Cost Intelligence](https://github.com/raphgm/cloud-cost-intelligence) project, now caught independently by this tool's `zero-utilization` policy against Virtual Machines (6 findings, $0.21–$1.00 each).
 
+![Daily billed cost and cost by service, charted from the real DuckDB output of this pipeline](docs/real-azure-test-results.png)
+
 ## Architecture
 
 CloudCost utilizes a layered plugin architecture. The CLI is built on **Typer** and **Rich**. Data is extracted via provider plugins directly into **PyArrow** tables, transformed in-memory, and synced to **DuckDB** or other data warehouses. Policies are executed directly against the warehouse to generate evidence-backed FinOps findings.
