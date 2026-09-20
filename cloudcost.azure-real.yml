@@ -1,0 +1,53 @@
+version: "1"
+
+pipeline:
+  name: real-azure-test-pipeline
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: azure_billing
+    type: azure.cost_export
+    config:
+      account_url: "https://cloudcosttest36034.blob.core.windows.net"
+      container: "cost-exports"
+      prefix: "exports/"
+
+transforms:
+  - name: normalize_costs
+    type: focus.normalize
+    input: azure_billing
+    config:
+      provider: azure
+      column_map:
+        ServiceName: service_name
+        PreTaxCost: billed_cost
+        InstanceId: resource_id
+        ResourceGroup: resource_group
+        UsageDateTime: usage_date
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/cloudcost-azure-real.duckdb
+
+loads:
+  - input: normalize_costs
+    destination: local_duckdb
+    table: fact_cost
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: unallocated-costs
+    type: sql
+    query_file: policies/unallocated_costs.sql
+    severity: high
+  - name: zero-utilization
+    type: sql
+    query_file: policies/zero_utilization.sql
+    severity: medium

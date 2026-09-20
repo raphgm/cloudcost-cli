@@ -57,7 +57,22 @@ def run_policies(config: str = typer.Argument("cloudcost.yml", help="Path to con
     console.print(f"[blue]Running policies from {config}...[/blue]")
     try:
         pipeline = load_config(config)
-        runner = PolicyRunner()
+
+        # PolicyRunner used to always default to "data/cloudcost.duckdb"
+        # regardless of what the pipeline's own destinations actually
+        # configured — sync would succeed against e.g.
+        # "data/cloudcost-azure-real.duckdb" and policy run would then fail
+        # with "database does not exist" against a file that was never
+        # created. Use the first duckdb destination actually declared in
+        # this pipeline's config instead.
+        duckdb_destinations = [d for d in pipeline.destinations if d.type == "duckdb"]
+        if not duckdb_destinations:
+            raise ValueError(f"No duckdb destination found in {config} — policy run requires one to query.")
+        db_path = duckdb_destinations[0].config.get("path")
+        if not db_path:
+            raise ValueError(f"duckdb destination '{duckdb_destinations[0].name}' has no 'path' configured.")
+
+        runner = PolicyRunner(db_path=db_path)
         total_findings = 0
         
         for policy_cfg in pipeline.policies:

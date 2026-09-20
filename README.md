@@ -46,6 +46,29 @@ cloudcost policy run cloudcost.yml
 cloudcost findings list
 ```
 
+## Mapping a real cloud source to the FOCUS schema
+
+`focus.normalize` doesn't guess your source's column names — declare the mapping explicitly in the transform's `config`, since every provider's raw export uses different names (Azure Cost Management's `azure.cost_export` source, for example, produces `ServiceName`/`PreTaxCost`, not the FOCUS-style `service_name`/`billed_cost` the bundled policies expect):
+
+```yaml
+transforms:
+  - name: normalize_costs
+    type: focus.normalize
+    input: azure_billing
+    config:
+      provider: azure
+      column_map:
+        ServiceName: service_name
+        PreTaxCost: billed_cost
+        InstanceId: resource_id
+        ResourceGroup: resource_group
+        UsageDateTime: usage_date
+```
+
+This was verified end-to-end against a real Azure Cost Management export (215 real cost line items, `cloudcost sync` + `cloudcost policy run` both succeeding and producing real findings) — see `cloudcost.azure-real.yml` for the full working example. AWS/OCI/Alibaba each need their own `column_map` matched to their real export schema; none of those have been verified against live data yet.
+
 ## Architecture
 
 CloudCost utilizes a layered plugin architecture. The CLI is built on **Typer** and **Rich**. Data is extracted via provider plugins directly into **PyArrow** tables, transformed in-memory, and synced to **DuckDB** or other data warehouses. Policies are executed directly against the warehouse to generate evidence-backed FinOps findings.
+
+`cloudcost policy run` reads its DuckDB path from the pipeline's own `destinations` config (the first `type: duckdb` entry) rather than a hardcoded default — this was a real bug until 2026-09-20 (`policy run` would fail with "database does not exist" against any pipeline that didn't name its file exactly `data/cloudcost.duckdb`), found and fixed while testing this tool against a real Azure account.
