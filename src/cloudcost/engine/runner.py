@@ -14,6 +14,7 @@ try:
     import cloudcost.sources.azure.unassociated_public_ips
     import cloudcost.sources.azure.vm_sizing
     import cloudcost.sources.azure.untagged_resources
+    import cloudcost.sources.azure.idle_load_balancers
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
