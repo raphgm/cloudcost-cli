@@ -11,6 +11,7 @@ try:
     import cloudcost.sources.azure.billing
     import cloudcost.sources.azure.metrics
     import cloudcost.sources.azure.unattached_disks
+    import cloudcost.sources.azure.unassociated_public_ips
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:

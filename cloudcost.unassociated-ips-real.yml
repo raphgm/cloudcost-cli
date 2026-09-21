@@ -1,0 +1,34 @@
+version: "1"
+
+pipeline:
+  name: unassociated-ips-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: ips
+    type: azure.unassociated_public_ips
+    config:
+      resource_group: pubip-test-rg
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/unassociated-ips-real.duckdb
+
+loads:
+  - input: ips
+    destination: local_duckdb
+    table: fact_unassociated_public_ips
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: unassociated-public-ips
+    type: sql
+    query_file: policies/unassociated_public_ips.sql
+    severity: medium
