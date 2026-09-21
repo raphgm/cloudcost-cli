@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: mysql-idle-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: mysql_metrics
+    type: azure.mysql_idle_flexible
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/mysql-idle-real.duckdb
+
+loads:
+  - input: mysql_metrics
+    destination: local_duckdb
+    table: fact_mysql_idle_flexible
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: mysql-idle-flexible
+    type: sql
+    query_file: policies/mysql_idle_flexible.sql
+    severity: medium
