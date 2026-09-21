@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: vm-sizing-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: sizing
+    type: azure.vm_sizing_recommendation
+    config:
+      resource_group: cost-compare-3day-rg
+      region: eastus
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/vm-sizing-real.duckdb
+
+loads:
+  - input: sizing
+    destination: local_duckdb
+    table: fact_vm_sizing_recommendation
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: vm-sizing-recommendation
+    type: sql
+    query_file: policies/vm_sizing_recommendation.sql
+    severity: low
