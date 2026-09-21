@@ -34,6 +34,7 @@ try:
     import cloudcost.sources.azure.idle_container_instances
     import cloudcost.sources.azure.idle_eventhub
     import cloudcost.sources.azure.idle_servicebus_premium
+    import cloudcost.sources.azure.aks_idle_nodepool
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:

@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: aks-idle-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: aks_nodepools
+    type: azure.aks_idle_nodepool
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/aks-idle-real.duckdb
+
+loads:
+  - input: aks_nodepools
+    destination: local_duckdb
+    table: fact_aks_idle_nodepool
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: aks-idle-nodepool
+    type: sql
+    query_file: policies/aks_idle_nodepool.sql
+    severity: medium
