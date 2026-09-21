@@ -11,17 +11,31 @@ CloudCost CLI is a provider-neutral, open-source FinOps data platform designed t
 - **SQL-First Governance Engine**: Write FinOps policies (like identifying unallocated costs or zero utilization resources) using standard SQL, producing structured findings.
 - **Native Cloud Providers**: Direct integration with `boto3`, `azure-storage-blob`, `oci`, and `oss2`.
 
-## Install (macOS Apple Silicon)
+## Install (prebuilt binaries)
 
-A standalone binary — no Python, no `pip`, no `uv`, no dependency management at all:
+Standalone binaries — no Python, no `pip`, no `uv`, no dependency management at all. Each is built and verified (`--help` runs clean) on its own native CI runner (macOS 14 arm64, ubuntu-latest, windows-latest via GitHub Actions).
 
 ```bash
+# macOS (Apple Silicon)
 curl -L https://github.com/raphgm/cloudcost-cli/releases/download/v0.1.0/cloudcost-macos-arm64 -o cloudcost
 chmod +x cloudcost
 ./cloudcost --help
 ```
 
-This is currently the only prebuilt binary — macOS arm64 (Apple Silicon) only, built and verified on that platform. No Linux, Windows, or Intel-Mac build exists yet.
+```bash
+# Linux (x86_64)
+curl -L https://github.com/raphgm/cloudcost-cli/releases/download/v0.1.0/cloudcost-linux-x86_64 -o cloudcost
+chmod +x cloudcost
+./cloudcost --help
+```
+
+```powershell
+# Windows (x86_64) — PowerShell
+Invoke-WebRequest https://github.com/raphgm/cloudcost-cli/releases/download/v0.1.0/cloudcost-windows-x86_64.exe -OutFile cloudcost.exe
+.\cloudcost.exe --help
+```
+
+Intel Mac isn't built yet. New binaries build automatically via `.github/workflows/build-release.yml` on every GitHub release, or can be triggered manually via `workflow_dispatch`.
 
 ## Building from source
 
