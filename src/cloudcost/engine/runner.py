@@ -54,6 +54,7 @@ try:
     import cloudcost.sources.azure.idle_acr_geo_replication
     import cloudcost.sources.azure.idle_functions_premium_min_instances
     import cloudcost.sources.azure.idle_logic_apps_standard
+    import cloudcost.sources.azure.cosmosdb_table_idle_ru
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
