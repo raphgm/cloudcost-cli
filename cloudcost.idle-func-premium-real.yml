@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-func-premium-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: func_plans
+    type: azure.idle_functions_premium_min_instances
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-func-premium-real.duckdb
+
+loads:
+  - input: func_plans
+    destination: local_duckdb
+    table: fact_idle_functions_premium_min_instances
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-functions-premium-min-instances
+    type: sql
+    query_file: policies/idle_functions_premium_min_instances.sql
+    severity: medium
