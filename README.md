@@ -47,7 +47,7 @@ Every check below was built the same way: create the actual cloud resource, run 
 
 **Databases & messaging**
 - Azure SQL DTU underutilization — `sql_dtu_underutilized`
-- Idle Cosmos DB provisioned throughput (SQL, MongoDB, and Cassandra APIs) — `cosmosdb_idle_ru`, `cosmosdb_mongo_idle_ru`, `cosmosdb_cassandra_idle_ru`
+- Idle Cosmos DB provisioned throughput (SQL, MongoDB, Cassandra, and Gremlin APIs) — `cosmosdb_idle_ru`, `cosmosdb_mongo_idle_ru`, `cosmosdb_cassandra_idle_ru`, `cosmosdb_gremlin_idle_ru`
 - Idle PostgreSQL / MySQL Flexible Server — `postgres_idle_flexible`, `mysql_idle_flexible`
 - Idle Redis Cache (live per-tier/SKU pricing) — `redis_idle`
 - Idle Event Hubs Namespace (Standard) — `idle_eventhub`
