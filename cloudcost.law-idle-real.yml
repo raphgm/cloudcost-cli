@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: law-idle-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: law_ingestion
+    type: azure.log_analytics_idle_commitment
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/law-idle-real.duckdb
+
+loads:
+  - input: law_ingestion
+    destination: local_duckdb
+    table: fact_log_analytics_idle_commitment
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: log-analytics-idle-commitment
+    type: sql
+    query_file: policies/log_analytics_idle_commitment.sql
+    severity: high
