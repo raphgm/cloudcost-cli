@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-redis-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: redis_metrics
+    type: azure.redis_idle_metrics
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-redis-real.duckdb
+
+loads:
+  - input: redis_metrics
+    destination: local_duckdb
+    table: fact_redis_idle_metrics
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: redis-idle
+    type: sql
+    query_file: policies/redis_idle.sql
+    severity: low
