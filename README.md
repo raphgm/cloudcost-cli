@@ -16,7 +16,13 @@ CloudCost CLI is a provider-neutral, open-source FinOps data platform designed t
 Standalone binaries — no Python, no `pip`, no `uv`, no dependency management at all. Each is built and verified (`--help` runs clean) on its own native CI runner (macOS 14 arm64, ubuntu-latest, windows-latest via GitHub Actions).
 
 ```bash
-# macOS (Apple Silicon)
+# macOS (Apple Silicon) — Homebrew, handles download/chmod/PATH for you
+brew install raphgm/tap/cloudcost
+cloudcost --help
+```
+
+```bash
+# macOS (Apple Silicon) — or download the binary directly
 curl -L https://github.com/raphgm/cloudcost-cli/releases/download/v0.1.0/cloudcost-macos-arm64 -o cloudcost
 chmod +x cloudcost
 ./cloudcost --help
