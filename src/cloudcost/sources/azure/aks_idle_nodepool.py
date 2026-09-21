@@ -26,7 +26,12 @@ def _fetch_hourly_price(vm_size: str, region: str) -> float:
             capture_output=True, text=True, check=True, timeout=15,
         ).stdout
         data = json.loads(raw)
-        items = [i for i in data.get("Items", []) if i.get("unitOfMeasure") == "1 Hour"]
+        items = [
+            i for i in data.get("Items", [])
+            if i.get("unitOfMeasure") == "1 Hour"
+            and "spot" not in i.get("skuName", "").lower()
+            and "low priority" not in i.get("skuName", "").lower()
+        ]
         return items[0]["retailPrice"] if items else 0.0
     except Exception:
         return 0.0
