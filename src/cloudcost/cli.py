@@ -11,6 +11,7 @@ def init():
     console.print("Created sample [bold]cloudcost.yml[/bold]")
 
 from cloudcost.config.loader import load_config
+import os
 import sys
 
 from cloudcost.core.capabilities import capabilities_registry
@@ -83,10 +84,33 @@ def run_policies(config: str = typer.Argument("cloudcost.yml", help="Path to con
             console.print(f"  -> Generated {len(findings)} findings.")
             
         console.print(f"[green]Policy execution complete. Total findings: {total_findings}[/green]")
-        
-        # Dump to a local JSON file for the findings command to read
+
+        # Real bug fixed: this used to open findings.json in "w" mode and
+        # dump only _findings_store (a module-level list that starts empty
+        # every process, since each `policy run` invocation is a fresh
+        # CLI process) -- so every run silently discarded all findings
+        # from every prior pipeline. Every check in this project lives in
+        # its own YAML pipeline, so without this fix `findings list` and
+        # the dashboard could only ever show the single most recently run
+        # check, never the combined picture across checks.
+        # Merge with whatever's already on disk, deduping by
+        # (resource_id, policy_name) so a rerun of the same check updates
+        # its entry instead of duplicating it, and write the union back.
+        existing_findings = []
+        if os.path.exists("data/findings.json"):
+            try:
+                with open("data/findings.json", "r") as f:
+                    existing_findings = json.load(f)
+            except (json.JSONDecodeError, FileNotFoundError):
+                existing_findings = []
+
+        merged = {(f["resource_id"], f["policy_name"]): f for f in existing_findings}
+        for finding in _findings_store:
+            data = finding.model_dump()
+            merged[(data["resource_id"], data["policy_name"])] = json.loads(json.dumps(data, default=str))
+
         with open("data/findings.json", "w") as f:
-            json.dump([f.model_dump() for f in _findings_store], f, default=str)
+            json.dump(list(merged.values()), f, default=str)
             
     except Exception as e:
         console.print(f"[red]Policy execution failed: {e}[/red]")
