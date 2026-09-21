@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-eventhub-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: eh_metrics
+    type: azure.idle_eventhub
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-eventhub-real.duckdb
+
+loads:
+  - input: eh_metrics
+    destination: local_duckdb
+    table: fact_idle_eventhub
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-eventhub
+    type: sql
+    query_file: policies/idle_eventhub.sql
+    severity: medium
