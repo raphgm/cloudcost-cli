@@ -18,6 +18,7 @@ try:
     import cloudcost.sources.azure.old_snapshots
     import cloudcost.sources.azure.sql_dtu_metrics
     import cloudcost.sources.azure.stopped_not_deallocated_vms
+    import cloudcost.sources.azure.empty_storage_accounts
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
