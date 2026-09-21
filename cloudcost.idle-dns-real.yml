@@ -1,0 +1,34 @@
+version: "1"
+
+pipeline:
+  name: idle-dns-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: dns_zones
+    type: azure.idle_dns_zone
+    config:
+      resource_group: cost-compare-3day-rg
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-dns-real.duckdb
+
+loads:
+  - input: dns_zones
+    destination: local_duckdb
+    table: fact_idle_dns_zone
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-dns-zone
+    type: sql
+    query_file: policies/idle_dns_zone.sql
+    severity: low

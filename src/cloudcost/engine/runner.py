@@ -41,6 +41,7 @@ try:
     import cloudcost.sources.azure.mysql_idle_flexible
     import cloudcost.sources.azure.idle_signalr
     import cloudcost.sources.azure.idle_traffic_manager
+    import cloudcost.sources.azure.idle_dns_zone
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
