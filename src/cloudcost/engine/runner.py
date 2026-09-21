@@ -26,6 +26,7 @@ try:
     import cloudcost.sources.azure.idle_container_registries
     import cloudcost.sources.azure.idle_app_gateways
     import cloudcost.sources.azure.redis_idle_metrics
+    import cloudcost.sources.azure.idle_bastion
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
