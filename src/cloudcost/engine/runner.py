@@ -21,6 +21,7 @@ try:
     import cloudcost.sources.azure.empty_storage_accounts
     import cloudcost.sources.azure.idle_app_service_plans
     import cloudcost.sources.azure.orphaned_nsgs
+    import cloudcost.sources.azure.premium_disk_downsize
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:

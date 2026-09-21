@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: premium-disk-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: premium_disks
+    type: azure.premium_disk_downsize
+    config:
+      resource_group: cost-compare-3day-rg
+      region: eastus
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/premium-disk-real.duckdb
+
+loads:
+  - input: premium_disks
+    destination: local_duckdb
+    table: fact_premium_disk_downsize
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: premium-disk-downsize
+    type: sql
+    query_file: policies/premium_disk_downsize.sql
+    severity: low
