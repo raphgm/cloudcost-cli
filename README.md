@@ -12,61 +12,55 @@ CloudCost CLI is a provider-neutral, open-source FinOps data platform designed t
 - **Live pricing, not hardcoded tables**: every check that needs a price fetches it from the provider's own live pricing API (Azure Retail Prices API today) at run time, not a rate card baked into the code that goes stale.
 - **Native Cloud Providers**: Direct integration with `boto3`, `azure-storage-blob`, `oci`, and `oss2`.
 
-## Real, individually-verified checks
+## Resources this CLI can check for waste (49 checks)
 
-Every check below was built the same way: create the actual cloud resource, run `cloudcost sync` + `policy run` + `findings list`, confirm the real dollar amount, then tear the resource down. No synthetic fixtures, no invented prices. See [CONTRIBUTING.md](CONTRIBUTING.md) for the exact pattern and how to add your own.
+Every check below was built the same way: create the actual cloud resource, run `cloudcost sync` + `policy run` + `findings list`, confirm the real dollar amount, then tear the resource down. No synthetic fixtures, no invented prices. See [CONTRIBUTING.md](CONTRIBUTING.md) for the exact pattern and how to add your own — GCP and AWS parity are open, well-scoped contributions (see [issues](https://github.com/raphgm/cloudcost-cli/issues)).
 
-**Compute**
-- Stopped-but-not-deallocated VMs (still billing, live per-size pricing) — `stopped_not_deallocated_vms`
-- VM rightsizing via CPU/network/disk metrics + live pricing — `vm_sizing_recommendation`, `rightsizing_utilization`
-- Idle VM Scale Set (fixed instance count, low CPU) — `idle_vmss`
-- Idle AKS node pool (control plane is free; the node VMs aren't) — `aks_idle_nodepool`
-- Idle Container Instance (restartPolicy=Always, near-zero CPU) — `idle_container_instances`
-- Idle Container Apps Dedicated workload profile (reserved nodes, zero apps) — `idle_container_apps_dedicated`
-- Idle Batch pool (dedicated nodes, zero active jobs) — `idle_batch_pool`
-- Idle Premium SSD v2 IOPS/throughput overage (unattached) — `idle_premiumv2_disk_overage`
-- Zero-utilization resources (general) — `zero_utilization`
-
-**Networking**
-- Unattached managed disks — `unattached_disks`
-- Unassociated public IPs — `unassociated_public_ips`
-- Idle load balancers / NAT gateways / Application Gateways — `idle_load_balancers`, `idle_nat_gateways`, `idle_app_gateways`
-- Idle Azure Firewall — `idle_firewall`
-- Idle Azure Bastion (zero sessions) — `idle_bastion`
-- Idle Private Endpoints (zero traffic) — `idle_private_endpoints`
-- Orphaned NSGs — `orphaned_nsgs`
-- Idle Front Door profile — `idle_front_door`
-- Idle Traffic Manager endpoint monitoring — `idle_traffic_manager`
-- Idle/orphaned DNS zones — `idle_dns_zone`
-
-**Data & storage**
-- Old/orphaned disk snapshots — `old_snapshots`
-- Premium disk downsize opportunities — `premium_disk_downsize`
-- Empty storage accounts — `empty_storage_accounts`
-- Log Analytics Commitment Tier over-reservation — `log_analytics_idle_commitment`
-
-**Databases & messaging**
-- Azure SQL DTU underutilization — `sql_dtu_underutilized`
-- Idle Cosmos DB provisioned throughput (SQL, MongoDB, Cassandra, and Gremlin APIs) — `cosmosdb_idle_ru`, `cosmosdb_mongo_idle_ru`, `cosmosdb_cassandra_idle_ru`, `cosmosdb_gremlin_idle_ru`
-- Idle PostgreSQL / MySQL Flexible Server — `postgres_idle_flexible`, `mysql_idle_flexible`
-- Idle Redis Cache (live per-tier/SKU pricing) — `redis_idle`
-- Idle Event Hubs Namespace (Standard) — `idle_eventhub`
-- Idle Service Bus Namespace (Premium) — `idle_servicebus_premium`
-
-**App platform**
-- Idle App Service Plans — `idle_app_service_plans`
-- Idle Static Web App (Standard) — `idle_static_web_app`
-- Idle App Configuration store — `idle_app_configuration`
-- Idle SignalR Service — `idle_signalr`
-- Idle Managed Grafana — `idle_managed_grafana`
-- Idle Container Registries — `idle_container_registries`
-
-**Governance**
-- Untagged resources — `untagged_resources`
-- Unallocated costs — `unallocated_costs`
-
-**Beyond cloud infra**
-- GitHub Actions wasted CI minutes (failed/cancelled workflow runs) — `github_wasted_actions_minutes`
+| Resource type | What's flagged | Check(s) |
+| --- | --- | --- |
+| Virtual Machines | Stopped-but-not-deallocated (still billing, live per-size pricing) | `stopped_not_deallocated_vms` |
+| Virtual Machines | Rightsizing via CPU/network/disk metrics + live pricing | `vm_sizing_recommendation`, `rightsizing_utilization` |
+| VM Scale Sets | Fixed instance count, sustained low CPU | `idle_vmss` |
+| AKS node pools | Control plane is free — the node VMs aren't | `aks_idle_nodepool` |
+| Container Instances | `restartPolicy=Always`, near-zero real CPU | `idle_container_instances` |
+| Container Apps (Dedicated) | Reserved workload-profile nodes, zero apps deployed | `idle_container_apps_dedicated` |
+| Batch pools | Dedicated nodes reserved, zero active jobs | `idle_batch_pool` |
+| Azure Functions (Premium) | Pre-warmed min-instance floor, near-zero real executions | `idle_functions_premium_min_instances` |
+| Logic Apps (Standard) | Reserved vCPU/memory, near-zero real workflow runs | `idle_logic_apps_standard` |
+| Premium SSD v2 / Ultra disks | IOPS/throughput overage on an unattached disk | `idle_premiumv2_disk_overage` |
+| Managed disks | Unattached (capacity waste) | `unattached_disks` |
+| Managed disks | Premium tier downsize opportunities | `premium_disk_downsize` |
+| Disk snapshots | Old/orphaned (>30 days) | `old_snapshots` |
+| Public IP addresses | Unassociated | `unassociated_public_ips` |
+| Load Balancers | Idle (no real backend traffic) | `idle_load_balancers` |
+| NAT Gateways | Idle | `idle_nat_gateways` |
+| Application Gateways | Idle | `idle_app_gateways` |
+| Azure Firewall | Zero data processed | `idle_firewall` |
+| Azure Bastion | Zero sessions | `idle_bastion` |
+| Private Endpoints | Zero real traffic | `idle_private_endpoints` |
+| Network Security Groups | Orphaned (not attached to anything) | `orphaned_nsgs` |
+| Azure Front Door | Zero requests | `idle_front_door` |
+| Traffic Manager | Monitored endpoints with zero DNS queries | `idle_traffic_manager` |
+| DNS Zones | Orphaned (only default SOA/NS records) | `idle_dns_zone` |
+| Container Registries | Zero repositories (Standard/Premium) | `idle_container_registries` |
+| Container Registries (Premium) | Geo-replica regions nothing pulls from | `idle_acr_geo_replication` |
+| Storage Accounts | Empty | `empty_storage_accounts` |
+| Log Analytics Workspaces | Commitment-tier over-reservation | `log_analytics_idle_commitment` |
+| Azure SQL Database | DTU underutilization | `sql_dtu_underutilized` |
+| Cosmos DB (SQL, MongoDB, Cassandra, Gremlin, Table APIs) | Provisioned RU/s, near-zero real consumption | `cosmosdb_idle_ru`, `cosmosdb_mongo_idle_ru`, `cosmosdb_cassandra_idle_ru`, `cosmosdb_gremlin_idle_ru`, `cosmosdb_table_idle_ru` |
+| PostgreSQL / MySQL Flexible Server | Provisioned vCore, sustained low CPU | `postgres_idle_flexible`, `mysql_idle_flexible` |
+| Azure Cache for Redis | Sustained low connected-client count, live per-tier/SKU pricing | `redis_idle` |
+| Event Hubs Namespace (Standard) | Reserved throughput units, zero incoming messages | `idle_eventhub` |
+| Service Bus Namespace (Premium) | Reserved messaging units, zero incoming messages | `idle_servicebus_premium` |
+| App Service Plans | Zero deployed sites | `idle_app_service_plans` |
+| Static Web Apps (Standard) | Zero real site hits | `idle_static_web_app` |
+| App Configuration | Zero real HTTP requests | `idle_app_configuration` |
+| SignalR Service | Reserved units, zero connections | `idle_signalr` |
+| Managed Grafana | Zero real HTTP requests | `idle_managed_grafana` |
+| Any resource | Missing required tags | `untagged_resources` |
+| Any resource | Unallocated/unattributed cost line items | `unallocated_costs` |
+| Any resource | General zero-utilization signal | `zero_utilization` |
+| GitHub Actions workflows | Wasted CI minutes on failed/cancelled runs (new `github` provider) | `github_wasted_actions_minutes` |
 
 ## Install (prebuilt binaries)
 
