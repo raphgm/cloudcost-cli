@@ -44,6 +44,7 @@ try:
     import cloudcost.sources.azure.idle_dns_zone
     import cloudcost.sources.azure.idle_app_configuration
     import cloudcost.sources.azure.idle_managed_grafana
+    import cloudcost.sources.azure.idle_static_web_app
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
