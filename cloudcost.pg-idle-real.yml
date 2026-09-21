@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: pg-idle-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: pg_metrics
+    type: azure.postgres_idle_flexible
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/pg-idle-real.duckdb
+
+loads:
+  - input: pg_metrics
+    destination: local_duckdb
+    table: fact_postgres_idle_flexible
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: postgres-idle-flexible
+    type: sql
+    query_file: policies/postgres_idle_flexible.sql
+    severity: medium

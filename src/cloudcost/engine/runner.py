@@ -37,6 +37,7 @@ try:
     import cloudcost.sources.azure.aks_idle_nodepool
     import cloudcost.sources.azure.idle_vmss
     import cloudcost.sources.azure.idle_front_door
+    import cloudcost.sources.azure.postgres_idle_flexible
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
