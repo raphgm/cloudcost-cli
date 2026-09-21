@@ -1,0 +1,100 @@
+name: Build release binaries
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            asset_name: cloudcost-macos-arm64
+            binary_name: cloudcost
+          - os: ubuntu-latest
+            asset_name: cloudcost-linux-x86_64
+            binary_name: cloudcost
+          - os: windows-latest
+            asset_name: cloudcost-windows-x86_64.exe
+            binary_name: cloudcost.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pyinstaller
+
+      - name: Find adbc_driver_postgresql static version file
+        id: adbc
+        shell: bash
+        run: |
+          PATH_TO_STATIC_VER=$(python -c "import adbc_driver_postgresql, os; print(os.path.join(os.path.dirname(adbc_driver_postgresql.__file__), '_static_version.py'))")
+          echo "path=$PATH_TO_STATIC_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Build binary (Unix)
+        if: runner.os != 'Windows'
+        run: >
+          pyinstaller --onefile --name cloudcost
+          --collect-all typer --collect-all rich --collect-all textual
+          --add-data="${{ steps.adbc.outputs.path }}:adbc_driver_postgresql"
+          --hidden-import cloudcost.sources.aws.billing
+          --hidden-import cloudcost.sources.azure.billing
+          --hidden-import cloudcost.sources.oci.billing
+          --hidden-import cloudcost.sources.alibaba.billing
+          --hidden-import cloudcost.sources.local.file_sources
+          --hidden-import cloudcost.sources.aws.inventory
+          --hidden-import cloudcost.destinations.duckdb_dest
+          --hidden-import cloudcost.destinations.postgres.dest
+          --hidden-import cloudcost.destinations.bigquery.dest
+          --hidden-import cloudcost.transforms.normalize
+          --hidden-import cloudcost.transforms.join
+          -p src src/cloudcost/cli.py
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        run: >
+          pyinstaller --onefile --name cloudcost
+          --collect-all typer --collect-all rich --collect-all textual
+          --add-data="${{ steps.adbc.outputs.path }};adbc_driver_postgresql"
+          --hidden-import cloudcost.sources.aws.billing
+          --hidden-import cloudcost.sources.azure.billing
+          --hidden-import cloudcost.sources.oci.billing
+          --hidden-import cloudcost.sources.alibaba.billing
+          --hidden-import cloudcost.sources.local.file_sources
+          --hidden-import cloudcost.sources.aws.inventory
+          --hidden-import cloudcost.destinations.duckdb_dest
+          --hidden-import cloudcost.destinations.postgres.dest
+          --hidden-import cloudcost.destinations.bigquery.dest
+          --hidden-import cloudcost.transforms.normalize
+          --hidden-import cloudcost.transforms.join
+          -p src src/cloudcost/cli.py
+
+      - name: Verify binary runs
+        shell: bash
+        run: |
+          ./dist/${{ matrix.binary_name }} --help
+
+      - name: Rename for release
+        shell: bash
+        run: mv dist/${{ matrix.binary_name }} ${{ matrix.asset_name }}
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset_name }}
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
