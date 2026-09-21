@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-batch-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: batch_pools
+    type: azure.idle_batch_pool
+    config:
+      account_name: batchidletest26812
+      resource_group: cost-compare-3day-rg
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-batch-real.duckdb
+
+loads:
+  - input: batch_pools
+    destination: local_duckdb
+    table: fact_idle_batch_pool
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-batch-pool
+    type: sql
+    query_file: policies/idle_batch_pool.sql
+    severity: medium
