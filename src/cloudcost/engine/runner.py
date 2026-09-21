@@ -29,6 +29,7 @@ try:
     import cloudcost.sources.azure.idle_bastion
     import cloudcost.sources.azure.idle_private_endpoints
     import cloudcost.sources.azure.cosmosdb_idle_ru
+    import cloudcost.sources.azure.idle_firewall
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:

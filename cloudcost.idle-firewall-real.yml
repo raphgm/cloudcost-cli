@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-firewall-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: fw_metrics
+    type: azure.idle_firewall
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-firewall-real.duckdb
+
+loads:
+  - input: fw_metrics
+    destination: local_duckdb
+    table: fact_idle_firewall
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-firewall
+    type: sql
+    query_file: policies/idle_firewall.sql
+    severity: high

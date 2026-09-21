@@ -32,6 +32,8 @@ class DuckDBDestination:
         mode = target.mode if hasattr(target, "mode") and target.mode else "overwrite"
         
         if not exists or mode == "overwrite":
+            if exists:
+                conn.execute(f"DROP TABLE {table_name}")
             conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM arrow_table_view")
         elif mode == "append":
             conn.execute(f"INSERT INTO {table_name} SELECT * FROM arrow_table_view")
