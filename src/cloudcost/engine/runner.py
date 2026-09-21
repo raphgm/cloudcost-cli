@@ -23,6 +23,7 @@ try:
     import cloudcost.sources.azure.orphaned_nsgs
     import cloudcost.sources.azure.premium_disk_downsize
     import cloudcost.sources.azure.idle_nat_gateways
+    import cloudcost.sources.azure.idle_container_registries
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
