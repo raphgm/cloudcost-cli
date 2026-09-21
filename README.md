@@ -11,12 +11,26 @@ CloudCost CLI is a provider-neutral, open-source FinOps data platform designed t
 - **SQL-First Governance Engine**: Write FinOps policies (like identifying unallocated costs or zero utilization resources) using standard SQL, producing structured findings.
 - **Native Cloud Providers**: Direct integration with `boto3`, `azure-storage-blob`, `oci`, and `oss2`.
 
-## Installation
+## Install (macOS Apple Silicon)
 
-Ensure you have Python 3.13+ and `uv` installed, then run:
+A standalone binary — no Python, no `pip`, no `uv`, no dependency management at all:
 
 ```bash
+curl -L https://github.com/raphgm/cloudcost-cli/releases/download/v0.1.0/cloudcost-macos-arm64 -o cloudcost
+chmod +x cloudcost
+./cloudcost --help
+```
+
+This is currently the only prebuilt binary — macOS arm64 (Apple Silicon) only, built and verified on that platform. No Linux, Windows, or Intel-Mac build exists yet.
+
+## Building from source
+
+For other platforms, or if you're contributing. Requires Python 3.13+ and `uv`:
+
+```bash
+uv venv
 uv pip install -e .
+source .venv/bin/activate
 ```
 
 ## Quick Start
