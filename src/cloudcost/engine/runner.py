@@ -47,6 +47,7 @@ try:
     import cloudcost.sources.azure.idle_static_web_app
     import cloudcost.sources.azure.idle_batch_pool
     import cloudcost.sources.azure.idle_premiumv2_disk_overage
+    import cloudcost.sources.azure.cosmosdb_mongo_idle_ru
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
