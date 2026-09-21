@@ -17,12 +17,14 @@ CloudCost CLI is a provider-neutral, open-source FinOps data platform designed t
 Every check below was built the same way: create the actual cloud resource, run `cloudcost sync` + `policy run` + `findings list`, confirm the real dollar amount, then tear the resource down. No synthetic fixtures, no invented prices. See [CONTRIBUTING.md](CONTRIBUTING.md) for the exact pattern and how to add your own.
 
 **Compute**
-- Stopped-but-not-deallocated VMs (still billing) — `stopped_not_deallocated_vms`
+- Stopped-but-not-deallocated VMs (still billing, live per-size pricing) — `stopped_not_deallocated_vms`
 - VM rightsizing via CPU/network/disk metrics + live pricing — `vm_sizing_recommendation`, `rightsizing_utilization`
 - Idle VM Scale Set (fixed instance count, low CPU) — `idle_vmss`
 - Idle AKS node pool (control plane is free; the node VMs aren't) — `aks_idle_nodepool`
 - Idle Container Instance (restartPolicy=Always, near-zero CPU) — `idle_container_instances`
+- Idle Container Apps Dedicated workload profile (reserved nodes, zero apps) — `idle_container_apps_dedicated`
 - Idle Batch pool (dedicated nodes, zero active jobs) — `idle_batch_pool`
+- Idle Premium SSD v2 IOPS/throughput overage (unattached) — `idle_premiumv2_disk_overage`
 - Zero-utilization resources (general) — `zero_utilization`
 
 **Networking**
@@ -45,9 +47,9 @@ Every check below was built the same way: create the actual cloud resource, run 
 
 **Databases & messaging**
 - Azure SQL DTU underutilization — `sql_dtu_underutilized`
-- Idle Cosmos DB provisioned throughput — `cosmosdb_idle_ru`
+- Idle Cosmos DB provisioned throughput (SQL, MongoDB, and Cassandra APIs) — `cosmosdb_idle_ru`, `cosmosdb_mongo_idle_ru`, `cosmosdb_cassandra_idle_ru`
 - Idle PostgreSQL / MySQL Flexible Server — `postgres_idle_flexible`, `mysql_idle_flexible`
-- Idle Redis Cache — `redis_idle`
+- Idle Redis Cache (live per-tier/SKU pricing) — `redis_idle`
 - Idle Event Hubs Namespace (Standard) — `idle_eventhub`
 - Idle Service Bus Namespace (Premium) — `idle_servicebus_premium`
 
@@ -176,9 +178,17 @@ Real breakdown from that data: **$50.50 total** across the resource group's life
 
 ![Daily billed cost and cost by service, charted from the real DuckDB output of this pipeline](docs/real-azure-test-results.png)
 
+## Testing
+
+Every check's real-resource verification (see above) proves it works against live cloud data. Separately, `tests/` covers the pipeline engine and policy SQL logic with fast, offline unit tests (in-memory DuckDB, no cloud access needed):
+
+```bash
+pytest tests/ -v
+```
+
 ## Contributing
 
-Want to add a check for AWS, GCP, or another Azure service? See [CONTRIBUTING.md](CONTRIBUTING.md) for the 4-file pattern every check follows, and the [open issues](https://github.com/raphgm/cloudcost-cli/issues) for good starting points (AWS/GCP parity, safe auto-remediation, PyPI packaging, a proper test suite).
+Want to add a check for AWS, GCP, or another Azure service? See [CONTRIBUTING.md](CONTRIBUTING.md) for the 4-file pattern every check follows, and the [open issues](https://github.com/raphgm/cloudcost-cli/issues) for good starting points (AWS/GCP parity, safe auto-remediation, PyPI packaging).
 
 ## Architecture
 
