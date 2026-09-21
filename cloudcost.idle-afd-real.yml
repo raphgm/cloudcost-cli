@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-afd-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: afd_metrics
+    type: azure.idle_front_door
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-afd-real.duckdb
+
+loads:
+  - input: afd_metrics
+    destination: local_duckdb
+    table: fact_idle_front_door
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-front-door
+    type: sql
+    query_file: policies/idle_front_door.sql
+    severity: medium
