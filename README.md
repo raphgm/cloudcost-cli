@@ -9,7 +9,62 @@ CloudCost CLI is a provider-neutral, open-source FinOps data platform designed t
 - **Apache Arrow Data Plane**: Lightning-fast, in-memory data movement.
 - **Bring-Your-Own Warehouse**: Load normalized billing data directly into DuckDB, PostgreSQL, or Google BigQuery.
 - **SQL-First Governance Engine**: Write FinOps policies (like identifying unallocated costs or zero utilization resources) using standard SQL, producing structured findings.
+- **Live pricing, not hardcoded tables**: every check that needs a price fetches it from the provider's own live pricing API (Azure Retail Prices API today) at run time, not a rate card baked into the code that goes stale.
 - **Native Cloud Providers**: Direct integration with `boto3`, `azure-storage-blob`, `oci`, and `oss2`.
+
+## Real, individually-verified checks
+
+Every check below was built the same way: create the actual cloud resource, run `cloudcost sync` + `policy run` + `findings list`, confirm the real dollar amount, then tear the resource down. No synthetic fixtures, no invented prices. See [CONTRIBUTING.md](CONTRIBUTING.md) for the exact pattern and how to add your own.
+
+**Compute**
+- Stopped-but-not-deallocated VMs (still billing) — `stopped_not_deallocated_vms`
+- VM rightsizing via CPU/network/disk metrics + live pricing — `vm_sizing_recommendation`, `rightsizing_utilization`
+- Idle VM Scale Set (fixed instance count, low CPU) — `idle_vmss`
+- Idle AKS node pool (control plane is free; the node VMs aren't) — `aks_idle_nodepool`
+- Idle Container Instance (restartPolicy=Always, near-zero CPU) — `idle_container_instances`
+- Idle Batch pool (dedicated nodes, zero active jobs) — `idle_batch_pool`
+- Zero-utilization resources (general) — `zero_utilization`
+
+**Networking**
+- Unattached managed disks — `unattached_disks`
+- Unassociated public IPs — `unassociated_public_ips`
+- Idle load balancers / NAT gateways / Application Gateways — `idle_load_balancers`, `idle_nat_gateways`, `idle_app_gateways`
+- Idle Azure Firewall — `idle_firewall`
+- Idle Azure Bastion (zero sessions) — `idle_bastion`
+- Idle Private Endpoints (zero traffic) — `idle_private_endpoints`
+- Orphaned NSGs — `orphaned_nsgs`
+- Idle Front Door profile — `idle_front_door`
+- Idle Traffic Manager endpoint monitoring — `idle_traffic_manager`
+- Idle/orphaned DNS zones — `idle_dns_zone`
+
+**Data & storage**
+- Old/orphaned disk snapshots — `old_snapshots`
+- Premium disk downsize opportunities — `premium_disk_downsize`
+- Empty storage accounts — `empty_storage_accounts`
+- Log Analytics Commitment Tier over-reservation — `log_analytics_idle_commitment`
+
+**Databases & messaging**
+- Azure SQL DTU underutilization — `sql_dtu_underutilized`
+- Idle Cosmos DB provisioned throughput — `cosmosdb_idle_ru`
+- Idle PostgreSQL / MySQL Flexible Server — `postgres_idle_flexible`, `mysql_idle_flexible`
+- Idle Redis Cache — `redis_idle`
+- Idle Event Hubs Namespace (Standard) — `idle_eventhub`
+- Idle Service Bus Namespace (Premium) — `idle_servicebus_premium`
+
+**App platform**
+- Idle App Service Plans — `idle_app_service_plans`
+- Idle Static Web App (Standard) — `idle_static_web_app`
+- Idle App Configuration store — `idle_app_configuration`
+- Idle SignalR Service — `idle_signalr`
+- Idle Managed Grafana — `idle_managed_grafana`
+- Idle Container Registries — `idle_container_registries`
+
+**Governance**
+- Untagged resources — `untagged_resources`
+- Unallocated costs — `unallocated_costs`
+
+**Beyond cloud infra**
+- GitHub Actions wasted CI minutes (failed/cancelled workflow runs) — `github_wasted_actions_minutes`
 
 ## Install (prebuilt binaries)
 
@@ -120,6 +175,10 @@ Evaluating policy: zero-utilization
 Real breakdown from that data: **$50.50 total** across the resource group's lifetime, with **Azure Bastion alone at $26.02 — 52% of total spend** — the same always-on-cost-concentration pattern flagged in the [Open Cloud Cost Intelligence](https://github.com/raphgm/cloud-cost-intelligence) project, now caught independently by this tool's `zero-utilization` policy against Virtual Machines (6 findings, $0.21–$1.00 each).
 
 ![Daily billed cost and cost by service, charted from the real DuckDB output of this pipeline](docs/real-azure-test-results.png)
+
+## Contributing
+
+Want to add a check for AWS, GCP, or another Azure service? See [CONTRIBUTING.md](CONTRIBUTING.md) for the 4-file pattern every check follows, and the [open issues](https://github.com/raphgm/cloudcost-cli/issues) for good starting points (AWS/GCP parity, safe auto-remediation, PyPI packaging, a proper test suite).
 
 ## Architecture
 
