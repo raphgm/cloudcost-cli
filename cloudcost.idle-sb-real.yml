@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-sb-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: sb_metrics
+    type: azure.idle_servicebus_premium
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-sb-real.duckdb
+
+loads:
+  - input: sb_metrics
+    destination: local_duckdb
+    table: fact_idle_servicebus_premium
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-servicebus-premium
+    type: sql
+    query_file: policies/idle_servicebus_premium.sql
+    severity: high
