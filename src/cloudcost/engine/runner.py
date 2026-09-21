@@ -9,6 +9,7 @@ import cloudcost.sources.local.file_sources
 try:
     import cloudcost.sources.aws.billing
     import cloudcost.sources.azure.billing
+    import cloudcost.sources.azure.metrics
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
