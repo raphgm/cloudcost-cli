@@ -1,0 +1,34 @@
+version: "1"
+
+pipeline:
+  name: old-snapshots-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: snapshots
+    type: azure.old_snapshots
+    config:
+      resource_group: cost-compare-3day-rg
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/old-snapshots-real.duckdb
+
+loads:
+  - input: snapshots
+    destination: local_duckdb
+    table: fact_old_snapshots
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: old-snapshots
+    type: sql
+    query_file: policies/old_snapshots.sql
+    severity: low
