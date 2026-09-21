@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-logicapp-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: logicapp_plans
+    type: azure.idle_logic_apps_standard
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-logicapp-real.duckdb
+
+loads:
+  - input: logicapp_plans
+    destination: local_duckdb
+    table: fact_idle_logic_apps_standard
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-logic-apps-standard
+    type: sql
+    query_file: policies/idle_logic_apps_standard.sql
+    severity: medium
