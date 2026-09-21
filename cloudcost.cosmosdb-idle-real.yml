@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: cosmosdb-idle-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: cosmos_ru
+    type: azure.cosmosdb_idle_ru
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/cosmosdb-idle-real.duckdb
+
+loads:
+  - input: cosmos_ru
+    destination: local_duckdb
+    table: fact_cosmosdb_idle_ru
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: cosmosdb-idle-ru
+    type: sql
+    query_file: policies/cosmosdb_idle_ru.sql
+    severity: medium
