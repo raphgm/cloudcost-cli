@@ -42,6 +42,11 @@ except ImportError as e:
     console.print(f"[yellow]Warning: Could not load some cloud sources: {e}[/yellow]")
 
 try:
+    import cloudcost.sources.github.wasted_actions_minutes
+except ImportError as e:
+    console.print(f"[yellow]Warning: Could not load GitHub sources: {e}[/yellow]")
+
+try:
     import cloudcost.sources.aws.inventory
 except ImportError:
     pass
