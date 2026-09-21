@@ -16,6 +16,8 @@ try:
     import cloudcost.sources.azure.untagged_resources
     import cloudcost.sources.azure.idle_load_balancers
     import cloudcost.sources.azure.old_snapshots
+    import cloudcost.sources.azure.sql_dtu_metrics
+    import cloudcost.sources.azure.stopped_not_deallocated_vms
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:

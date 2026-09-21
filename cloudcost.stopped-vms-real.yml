@@ -1,0 +1,34 @@
+version: "1"
+
+pipeline:
+  name: stopped-vms-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: stopped_vms
+    type: azure.stopped_not_deallocated_vms
+    config:
+      resource_group: cost-compare-3day-rg
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/stopped-vms-real.duckdb
+
+loads:
+  - input: stopped_vms
+    destination: local_duckdb
+    table: fact_stopped_not_deallocated_vms
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: stopped-not-deallocated-vms
+    type: sql
+    query_file: policies/stopped_not_deallocated_vms.sql
+    severity: high
