@@ -1,12 +1,18 @@
 [project]
 name = "cloudcost-cli"
 version = "0.1.0"
-description = "Add your description here"
+description = "Azure-first FinOps waste detection CLI for cloud cost governance"
 readme = "README.md"
 authors = [
     { name = "Raphael", email = "rdgabmomoh@gmail.com" }
 ]
+license = { text = "MIT" }
 requires-python = ">=3.13"
+
+[project.urls]
+Homepage = "https://github.com/raphgm/cloudcost-cli"
+Repository = "https://github.com/raphgm/cloudcost-cli"
+Issues = "https://github.com/raphgm/cloudcost-cli/issues"
 dependencies = [
     "adbc-driver-postgresql>=1.12.0",
     "azure-identity>=1.25.3",
