@@ -1,8 +1,8 @@
 # CloudCost CLI
 
-**Enterprise Multi-Cloud FinOps Data Platform**
+**Azure-first FinOps waste detection, with a provider-neutral engine underneath**
 
-CloudCost CLI is a provider-neutral, open-source FinOps data platform designed to collect, normalize, enrich, analyze, and govern cloud financial and infrastructure data across AWS, Azure, GCP, OCI, and Alibaba Cloud.
+CloudCost CLI's pipeline engine (YAML config, Apache Arrow data plane, DuckDB/Postgres/BigQuery destinations, SQL-first policy runner) is genuinely provider-neutral, and it ships with real billing-export sources for AWS, OCI, and Alibaba Cloud. But **the 49 individually-verified waste-detection checks are currently Azure-only** — the other providers have working billing ingestion, not check coverage yet. GCP has neither. If you're evaluating this tool, plan around that: it's a deep, rigorously-verified Azure FinOps tool today, not yet the multi-cloud platform the pipeline architecture is capable of becoming. AWS/GCP parity are open, well-scoped contributions (see [issues](https://github.com/raphgm/cloudcost-cli/issues)) — the pattern is proven 49 times over, it just needs to be repeated for other providers.
 
 ## Key Features
 - **Declarative YAML Pipelines**: Define your extraction, transformation, and loading in a single `cloudcost.yml` file.
@@ -10,9 +10,9 @@ CloudCost CLI is a provider-neutral, open-source FinOps data platform designed t
 - **Bring-Your-Own Warehouse**: Load normalized billing data directly into DuckDB, PostgreSQL, or Google BigQuery.
 - **SQL-First Governance Engine**: Write FinOps policies (like identifying unallocated costs or zero utilization resources) using standard SQL, producing structured findings.
 - **Live pricing, not hardcoded tables**: every check that needs a price fetches it from the provider's own live pricing API (Azure Retail Prices API today) at run time, not a rate card baked into the code that goes stale.
-- **Native Cloud Providers**: Direct integration with `boto3`, `azure-storage-blob`, `oci`, and `oss2`.
+- **Billing-export ingestion for AWS, OCI, and Alibaba Cloud**: `boto3`, `oci`, and `oss2` integrations exist and pull real billing data today — but, again, waste-detection *checks* against that data aren't built yet outside Azure.
 
-## Resources this CLI can check for waste (49 checks)
+## Resources this CLI can check for waste (49 checks, all Azure)
 
 Every check below was built the same way: create the actual cloud resource, run `cloudcost sync` + `policy run` + `findings list`, confirm the real dollar amount, then tear the resource down. No synthetic fixtures, no invented prices. See [CONTRIBUTING.md](CONTRIBUTING.md) for the exact pattern and how to add your own — GCP and AWS parity are open, well-scoped contributions (see [issues](https://github.com/raphgm/cloudcost-cli/issues)).
 
