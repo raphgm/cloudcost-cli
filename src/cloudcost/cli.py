@@ -1,3 +1,10 @@
+import html
+import json
+import os
+import sys
+from pathlib import Path
+
+import requests
 import typer
 from rich.console import Console
 
@@ -11,11 +18,8 @@ def init():
     console.print("Created sample [bold]cloudcost.yml[/bold]")
 
 from cloudcost.config.loader import load_config
-import os
-import sys
 
 from cloudcost.core.capabilities import capabilities_registry
-import json
 
 providers_app = typer.Typer(help="Manage and discover cloud provider capabilities.")
 app.add_typer(providers_app, name="providers")
@@ -137,6 +141,37 @@ def list_findings(severity: str = typer.Option(None, help="Filter by severity"))
     except FileNotFoundError:
         console.print("[yellow]No findings generated yet. Run `cloudcost policy run` first.[/yellow]")
 
+@findings_app.command("notify")
+def notify_findings(
+    webhook_url: str = typer.Option(..., help="Slack incoming webhook or generic webhook URL"),
+    input: str = typer.Option("data/findings.json", help="Path to findings JSON file"),
+):
+    """Post a brief findings summary to a webhook endpoint."""
+    try:
+        with open(input, "r", encoding="utf-8") as f:
+            findings = json.load(f)
+    except FileNotFoundError:
+        console.print("[yellow]No findings generated yet. Run `cloudcost policy run` first.[/yellow]")
+        return
+
+    if not findings:
+        message = "CloudCost findings summary: no new findings detected."
+    else:
+        total_impact = sum(float(f.get("estimated_impact", 0.0) or 0.0) for f in findings)
+        message = (
+            f"CloudCost findings summary: {len(findings)} findings, total at risk: ${total_impact:,.2f}.\n"
+            + "\n".join(
+                f"- {f.get('policy_name', 'unknown')} ({f.get('service_name', 'unknown')}): {f.get('severity', 'unknown').upper()} - ${float(f.get('estimated_impact', 0.0) or 0.0):,.2f}"
+                for f in findings[:5]
+            )
+        )
+
+    payload = {"text": message}
+    response = requests.post(webhook_url, json=payload, timeout=10)
+    response.raise_for_status()
+
+    console.print(f"[green]Notification sent to {webhook_url}[/green]")
+
 @app.command()
 def validate(config: str = typer.Argument("cloudcost.yml", help="Path to pipeline configuration file")):
     """Validate a CloudCost pipeline configuration file."""
@@ -188,6 +223,90 @@ def iac_map(
     except Exception as e:
         console.print(f"[red]Failed to map IaC: {e}[/red]")
         sys.exit(1)
+
+@app.command()
+def report(
+    input: str = typer.Option("data/findings.json", "--input", help="Path to findings JSON file"),
+    output: str = typer.Option("data/report.html", "--output", help="Path to write the HTML report"),
+):
+    """Render a static HTML summary of current findings."""
+    try:
+        with open(input, "r", encoding="utf-8") as f:
+            findings = json.load(f)
+    except FileNotFoundError:
+        console.print("[yellow]No findings generated yet. Run `cloudcost policy run` first.[/yellow]")
+        return
+
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    findings = sorted(findings, key=lambda f: float(f.get("estimated_impact", 0.0) or 0.0), reverse=True)
+    total_impact = sum(float(f.get("estimated_impact", 0.0) or 0.0) for f in findings)
+
+    rows_html = []
+    for finding in findings:
+        policy_name = html.escape(str(finding.get("policy_name", "N/A")))
+        provider = html.escape(str(finding.get("provider", "N/A")))
+        service = html.escape(str(finding.get("service_name", "N/A")))
+        severity = html.escape(str(finding.get("severity", "unknown")).upper())
+        impact = float(finding.get("estimated_impact", 0.0) or 0.0)
+        rows_html.append(
+            """
+            <tr>
+              <td>{policy_name}</td>
+              <td>{provider}</td>
+              <td>{service}</td>
+              <td>{severity}</td>
+              <td>${impact:,.2f}</td>
+            </tr>
+            """.format(policy_name=policy_name, provider=provider, service=service, severity=severity, impact=impact)
+        )
+
+    table_body = "\n".join(rows_html) if rows_html else "<tr><td colspan='5'>No findings</td></tr>"
+
+    html_report = f"""<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <title>CloudCost Findings Report</title>
+  <style>
+    body {{ font-family: Arial, sans-serif; margin: 2rem; color: #1f2937; }}
+    h1 {{ margin-bottom: 0.5rem; }}
+    .summary {{ margin: 1rem 0 2rem; padding: 1rem; background: #f3f4f6; border-radius: 8px; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 1rem; }}
+    th, td {{ padding: 0.75rem; border: 1px solid #d1d5db; text-align: left; }}
+    th {{ background: #e5e7eb; }}
+    .muted {{ color: #4b5563; }}
+  </style>
+</head>
+<body>
+  <h1>CloudCost Findings Report</h1>
+  <div class=\"summary\">
+    <div><strong>Total findings:</strong> {len(findings)}</div>
+    <div><strong>Total at risk:</strong> ${total_impact:,.2f}</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Policy</th>
+        <th>Provider</th>
+        <th>Service</th>
+        <th>Severity</th>
+        <th>Impact ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {table_body}
+    </tbody>
+  </table>
+</body>
+</html>
+"""
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html_report)
+
+    console.print(f"[green]Report written to {output_path}[/green]")
 
 @app.command()
 def dashboard():
