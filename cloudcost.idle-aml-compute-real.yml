@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-aml-compute-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: aml_compute
+    type: azure.idle_aml_compute_instance
+    config:
+      resource_group: cost-compare-3day-rg
+      workspace_name: mlw-idle-t2
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-aml-compute-real.duckdb
+
+loads:
+  - input: aml_compute
+    destination: local_duckdb
+    table: fact_idle_aml_compute_instance
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-aml-compute-instance
+    type: sql
+    query_file: policies/idle_aml_compute_instance.sql
+    severity: medium
