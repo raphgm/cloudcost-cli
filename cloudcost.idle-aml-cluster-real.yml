@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-aml-cluster-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: aml_cluster
+    type: azure.idle_aml_compute_cluster
+    config:
+      resource_group: cost-compare-3day-rg
+      workspace_name: mlw-endpoint-test
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-aml-cluster-real.duckdb
+
+loads:
+  - input: aml_cluster
+    destination: local_duckdb
+    table: fact_idle_aml_compute_cluster
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-aml-compute-cluster
+    type: sql
+    query_file: policies/idle_aml_compute_cluster.sql
+    severity: high

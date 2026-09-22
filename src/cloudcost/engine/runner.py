@@ -60,6 +60,7 @@ try:
     import cloudcost.sources.azure.idle_openai_ptu
     import cloudcost.sources.azure.idle_ai_search
     import cloudcost.sources.azure.idle_aml_compute_instance
+    import cloudcost.sources.azure.idle_aml_compute_cluster
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
