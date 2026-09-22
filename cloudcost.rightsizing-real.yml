@@ -1,0 +1,58 @@
+version: "1"
+
+pipeline:
+  name: rightsizing-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: vm_metrics
+    type: azure.vm_metrics
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+  - name: azure_billing
+    type: azure.cost_export
+    config:
+      account_url: "https://cloudcosttest36034.blob.core.windows.net"
+      container: "cost-exports"
+      prefix: "exports/"
+
+transforms:
+  - name: normalize_costs
+    type: focus.normalize
+    input: azure_billing
+    config:
+      provider: azure
+      column_map:
+        ServiceName: service_name
+        PreTaxCost: billed_cost
+        InstanceId: resource_id
+        ResourceGroup: resource_group
+        UsageDateTime: usage_date
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/rightsizing-real.duckdb
+
+loads:
+  - input: vm_metrics
+    destination: local_duckdb
+    table: fact_metrics
+    mode: overwrite
+  - input: normalize_costs
+    destination: local_duckdb
+    table: fact_cost
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: rightsizing-utilization
+    type: sql
+    query_file: policies/rightsizing_utilization.sql
+    severity: medium
