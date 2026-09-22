@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-apim-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: apim_metrics
+    type: azure.idle_apim
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-apim-real.duckdb
+
+loads:
+  - input: apim_metrics
+    destination: local_duckdb
+    table: fact_idle_apim
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-apim
+    type: sql
+    query_file: policies/idle_apim.sql
+    severity: medium

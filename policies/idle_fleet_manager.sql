@@ -1,19 +1,19 @@
--- Real check: Azure Kubernetes Fleet Manager hubs bill a fixed monthly fee
--- when enabled, even when no member clusters are attached or no update runs
--- are happening across the lookback window.
+-- Real check: Azure Kubernetes Fleet Manager itself is free -- Microsoft's
+-- official pricing page states "Azure Kubernetes Fleet Manager resource
+-- is free to use," confirmed live during this check's verification. The
+-- real cost is the hub cluster's own AKS infrastructure (a real
+-- Standard_DS3_v2 node by default), which bills continuously whether
+-- any member clusters are attached or not. Price fetched live via the
+-- Retail Prices API for the hub's real VM size.
 SELECT
     'azure' AS provider,
     resource_id,
-    'Fleet Manager' AS service_name,
-    CASE
-        WHEN sku = 'Standard' THEN 30.00
-        ELSE 0.00
-    END AS billed_cost,
+    'AKS Fleet Manager (hub infrastructure)' AS service_name,
+    ROUND(hourly_price * 730, 2) AS billed_cost,
     resource_name,
-    sku,
+    hub_vm_size,
     member_cluster_count,
-    update_runs,
-    lookback_days,
-    'Fleet Manager with 0 member clusters over ' || lookback_days || ' days (' || sku || ')' AS evidence_reason
+    'Fleet hub with 0 member clusters attached (' || hub_vm_size || ' node)' AS evidence_reason
 FROM fact_idle_fleet_manager
-WHERE member_cluster_count = 0;
+WHERE member_cluster_count = 0
+  AND hourly_price > 0;

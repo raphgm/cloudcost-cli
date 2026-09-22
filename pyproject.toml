@@ -8,11 +8,6 @@ authors = [
 ]
 license = { text = "MIT" }
 requires-python = ">=3.13"
-
-[project.urls]
-Homepage = "https://github.com/raphgm/cloudcost-cli"
-Repository = "https://github.com/raphgm/cloudcost-cli"
-Issues = "https://github.com/raphgm/cloudcost-cli/issues"
 dependencies = [
     "adbc-driver-postgresql>=1.12.0",
     "azure-identity>=1.25.3",
@@ -30,6 +25,11 @@ dependencies = [
     "textual>=8.2.8",
     "typer>=0.27.2",
 ]
+
+[project.urls]
+Homepage = "https://github.com/raphgm/cloudcost-cli"
+Repository = "https://github.com/raphgm/cloudcost-cli"
+Issues = "https://github.com/raphgm/cloudcost-cli/issues"
 
 [project.scripts]
 cloudcost = "cloudcost.cli:app"

@@ -61,6 +61,9 @@ try:
     import cloudcost.sources.azure.idle_ai_search
     import cloudcost.sources.azure.idle_aml_compute_instance
     import cloudcost.sources.azure.idle_aml_compute_cluster
+    import cloudcost.sources.azure.idle_apim
+    import cloudcost.sources.azure.idle_fleet_manager
+    import cloudcost.sources.azure.idle_managed_hsm
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
