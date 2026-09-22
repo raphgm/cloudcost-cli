@@ -30,6 +30,7 @@ try:
     import cloudcost.sources.azure.idle_private_endpoints
     import cloudcost.sources.azure.cosmosdb_idle_ru
     import cloudcost.sources.azure.idle_firewall
+    import cloudcost.sources.azure.idle_vpn_gateway
     import cloudcost.sources.azure.log_analytics_idle_commitment
     import cloudcost.sources.azure.idle_container_instances
     import cloudcost.sources.azure.idle_eventhub
