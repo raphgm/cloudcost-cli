@@ -1,0 +1,35 @@
+version: "1"
+
+pipeline:
+  name: idle-health-data-fhir-real-test
+  mode: incremental
+  timezone: UTC
+
+sources:
+  - name: fhir_metrics
+    type: azure.idle_health_data_fhir
+    config:
+      resource_group: cost-compare-3day-rg
+      lookback_days: 1
+
+destinations:
+  - name: local_duckdb
+    type: duckdb
+    config:
+      path: ./data/idle-health-data-fhir-real.duckdb
+
+loads:
+  - input: fhir_metrics
+    destination: local_duckdb
+    table: fact_idle_health_data_fhir
+    mode: overwrite
+
+observability:
+  log_level: info
+  emit_run_summary: true
+
+policies:
+  - name: idle-health-data-fhir
+    type: sql
+    query_file: policies/idle_health_data_fhir.sql
+    severity: medium

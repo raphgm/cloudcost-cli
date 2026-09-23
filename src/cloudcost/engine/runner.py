@@ -64,6 +64,7 @@ try:
     import cloudcost.sources.azure.idle_apim
     import cloudcost.sources.azure.idle_fleet_manager
     import cloudcost.sources.azure.idle_managed_hsm
+    import cloudcost.sources.azure.idle_health_data_fhir
     import cloudcost.sources.oci.billing
     import cloudcost.sources.alibaba.billing
 except ImportError as e:
