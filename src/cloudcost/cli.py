@@ -340,5 +340,86 @@ def query(
         console.print(f"[red]Query failed: {e}[/red]")
         sys.exit(1)
 
+remediate_app = typer.Typer(help="Auto-remediate findings (stop/delete), with safety rails.")
+app.add_typer(remediate_app, name="remediate")
+
+
+def _load_findings(input: str) -> list[dict]:
+    if not os.path.exists(input):
+        console.print("[yellow]No findings generated yet. Run `cloudcost policy run` first.[/yellow]")
+        raise typer.Exit(1)
+    with open(input, "r") as f:
+        return json.load(f)
+
+
+@remediate_app.command("plan")
+def remediate_plan(
+    input: str = typer.Option("data/findings.json", help="Path to findings JSON file"),
+    finding_id: str = typer.Option(None, help="Only plan for this finding_id"),
+    severity: str = typer.Option(None, help="Only plan for findings at this severity"),
+):
+    """Show what auto-remediation WOULD do for current findings. Never executes anything."""
+    from cloudcost.remediation.executor import plan as build_plan
+
+    findings = _load_findings(input)
+    if finding_id:
+        findings = [f for f in findings if f["finding_id"] == finding_id]
+    if severity:
+        findings = [f for f in findings if f["severity"].lower() == severity.lower()]
+
+    entries = build_plan(findings)
+    supported = [e for e in entries if e["supported"]]
+    unsupported = [e for e in entries if not e["supported"]]
+
+    console.print(f"[blue]{len(supported)} of {len(entries)} findings are auto-remediable:[/blue]")
+    for e in supported:
+        console.print(f"  [{e['risk']}] {e['policy_name']} -> {e['action']} {e['resource_id']}")
+        console.print(f"      {e['description']}")
+        console.print(f"      $ {' '.join(e['command'])}")
+    if unsupported:
+        console.print(f"[yellow]{len(unsupported)} findings are not on the auto-remediation allow-list:[/yellow]")
+        for e in unsupported:
+            console.print(f"  {e['policy_name']} ({e['reason']})")
+
+
+@remediate_app.command("apply")
+def remediate_apply(
+    input: str = typer.Option("data/findings.json", help="Path to findings JSON file"),
+    finding_id: str = typer.Option(None, help="Only remediate this finding_id"),
+    severity: str = typer.Option(None, help="Only remediate findings at this severity"),
+    yes: bool = typer.Option(False, "--yes", help="Actually execute. Without this flag, only the plan is shown -- nothing runs."),
+):
+    """Execute auto-remediation for current findings. Refuses to act without --yes."""
+    from cloudcost.remediation.executor import plan as build_plan, apply_one
+
+    findings = _load_findings(input)
+    if finding_id:
+        findings = [f for f in findings if f["finding_id"] == finding_id]
+    if severity:
+        findings = [f for f in findings if f["severity"].lower() == severity.lower()]
+
+    entries = build_plan(findings)
+    supported = [e for e in entries if e["supported"]]
+
+    if not supported:
+        console.print("[yellow]Nothing to remediate (no supported findings matched).[/yellow]")
+        return
+
+    console.print(f"[blue]Plan: {len(supported)} action(s)[/blue]")
+    for e in supported:
+        console.print(f"  [{e['risk']}] {e['policy_name']} -> {e['action']} {e['resource_id']}")
+
+    if not yes:
+        console.print("[yellow]Dry run only -- pass --yes to actually execute this plan.[/yellow]")
+        return
+
+    for e in supported:
+        result = apply_one(e)
+        color = "green" if result["status"] == "success" else "yellow" if result["status"] == "skipped" else "red"
+        console.print(f"[{color}]{result['status'].upper()}[/{color}] {result['policy_name']} {result['resource_id']}: {result['message']}")
+
+    console.print("[blue]Audit log written to data/remediation_log.json[/blue]")
+
+
 if __name__ == "__main__":
     app()

@@ -103,6 +103,15 @@ Invoke-WebRequest https://github.com/raphgm/cloudcost-cli/releases/download/v0.1
 
 Intel Mac isn't built yet. New binaries build automatically via `.github/workflows/build-release.yml` on every GitHub release, or can be triggered manually via `workflow_dispatch`.
 
+## Install (PyPI)
+
+```bash
+pip install cloudcost-finops
+cloudcost --help
+```
+
+The PyPI distribution is named `cloudcost-finops` (`cloudcost-cli` was already taken by an unrelated project) — the installed command is still `cloudcost`.
+
 ## Building from source
 
 For other platforms, or if you're contributing. Requires Python 3.13+ and `uv`:

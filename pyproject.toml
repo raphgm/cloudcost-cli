@@ -1,5 +1,5 @@
 [project]
-name = "cloudcost-cli"
+name = "cloudcost-finops"
 version = "0.1.0"
 description = "Azure-first FinOps waste detection CLI for cloud cost governance"
 readme = "README.md"
@@ -21,6 +21,7 @@ dependencies = [
     "pyarrow>=25.0.1",
     "pydantic>=2.13.5",
     "pyyaml>=6.0.3",
+    "requests>=2.32.0",
     "rich>=15.0.0",
     "textual>=8.2.8",
     "typer>=0.27.2",
@@ -45,3 +46,6 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv.build-backend]
+module-name = "cloudcost"
