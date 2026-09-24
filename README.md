@@ -2,7 +2,7 @@
 
 **Azure-first FinOps waste detection, with a provider-neutral engine underneath**
 
-CloudCost CLI's pipeline engine (YAML config, Apache Arrow data plane, DuckDB/Postgres/BigQuery destinations, SQL-first policy runner) is genuinely provider-neutral, and it ships with real billing-export sources for AWS, OCI, and Alibaba Cloud. But **the 49 individually-verified waste-detection checks are currently Azure-only** — the other providers have working billing ingestion, not check coverage yet. GCP has neither. If you're evaluating this tool, plan around that: it's a deep, rigorously-verified Azure FinOps tool today, not yet the multi-cloud platform the pipeline architecture is capable of becoming. AWS/GCP parity are open, well-scoped contributions (see [issues](https://github.com/raphgm/cloudcost-cli/issues)) — the pattern is proven 49 times over, it just needs to be repeated for other providers.
+CloudCost CLI's pipeline engine (YAML config, Apache Arrow data plane, DuckDB/Postgres/BigQuery destinations, SQL-first policy runner) is genuinely provider-neutral, and it ships with real billing-export sources for AWS, OCI, and Alibaba Cloud. But **the 59 individually-verified waste-detection checks are currently Azure-only** — the other providers have working billing ingestion, not check coverage yet. GCP has neither. If you're evaluating this tool, plan around that: it's a deep, rigorously-verified Azure FinOps tool today, not yet the multi-cloud platform the pipeline architecture is capable of becoming. AWS/GCP parity are open, well-scoped contributions (see [issues](https://github.com/raphgm/cloudcost-cli/issues)) — the pattern is proven 59 times over, it just needs to be repeated for other providers.
 
 ## Key Features
 - **Declarative YAML Pipelines**: Define your extraction, transformation, and loading in a single `cloudcost.yml` file.
@@ -12,7 +12,7 @@ CloudCost CLI's pipeline engine (YAML config, Apache Arrow data plane, DuckDB/Po
 - **Live pricing, not hardcoded tables**: every check that needs a price fetches it from the provider's own live pricing API (Azure Retail Prices API today) at run time, not a rate card baked into the code that goes stale.
 - **Billing-export ingestion for AWS, OCI, and Alibaba Cloud**: `boto3`, `oci`, and `oss2` integrations exist and pull real billing data today — but, again, waste-detection *checks* against that data aren't built yet outside Azure.
 
-## Resources this CLI can check for waste (49 checks, all Azure)
+## Resources this CLI can check for waste (59 checks, all Azure)
 
 Every check below was built the same way: create the actual cloud resource, run `cloudcost sync` + `policy run` + `findings list`, confirm the real dollar amount, then tear the resource down. No synthetic fixtures, no invented prices. See [CONTRIBUTING.md](CONTRIBUTING.md) for the exact pattern and how to add your own — GCP and AWS parity are open, well-scoped contributions (see [issues](https://github.com/raphgm/cloudcost-cli/issues)).
 
@@ -57,6 +57,15 @@ Every check below was built the same way: create the actual cloud resource, run 
 | App Configuration | Zero real HTTP requests | `idle_app_configuration` |
 | SignalR Service | Reserved units, zero connections | `idle_signalr` |
 | Managed Grafana | Zero real HTTP requests | `idle_managed_grafana` |
+| Public IP Prefix | Zero real Public IP addresses allocated from it | `idle_public_ip_prefix` |
+| Azure OpenAI (Provisioned Throughput) | PTU deployment, zero real inference requests | `idle_openai_ptu` |
+| Azure AI Search | Zero real queries per replica/partition | `idle_ai_search` |
+| Machine Learning Compute Instance | Left Running, zero real job/notebook activity | `idle_aml_compute_instance` |
+| Machine Learning Compute Cluster | Nonzero min-node floor, sustained zero real utilization | `idle_aml_compute_cluster` |
+| API Management | Zero real requests, live per-tier pricing | `idle_apim` |
+| AKS Fleet Manager | Free by itself — flags the hub cluster's own paid VM infra when member count is zero | `idle_fleet_manager` |
+| Managed HSM | Zero real key operations, live pricing sourced from Key Vault pricing page | `idle_managed_hsm` |
+| Health Data Services (FHIR) | Zero real API requests, fixed hourly Service Runtime fee | `idle_health_data_fhir` |
 | Any resource | Missing required tags | `untagged_resources` |
 | Any resource | Unallocated/unattributed cost line items | `unallocated_costs` |
 | Any resource | General zero-utilization signal | `zero_utilization` |
