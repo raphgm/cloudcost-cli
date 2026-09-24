@@ -1,6 +1,6 @@
 [project]
 name = "cloudcost-finops"
-version = "0.1.0"
+version = "0.2.0"
 description = "Azure-first FinOps waste detection CLI for cloud cost governance"
 readme = "README.md"
 authors = [
