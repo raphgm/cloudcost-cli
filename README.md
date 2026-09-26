@@ -149,6 +149,11 @@ cloudcost policy run cloudcost.yml
 cloudcost findings list
 ```
 
+   To see which resources to fix first, roll findings up per resource (sorted by combined impact; `--min-findings 2` shows only resources hit by more than one check):
+```bash
+cloudcost findings summary
+```
+
 ## Mapping a real cloud source to the FOCUS schema
 
 `focus.normalize` doesn't guess your source's column names — declare the mapping explicitly in the transform's `config`, since every provider's raw export uses different names (Azure Cost Management's `azure.cost_export` source, for example, produces `ServiceName`/`PreTaxCost`, not the FOCUS-style `service_name`/`billed_cost` the bundled policies expect):
