@@ -141,6 +141,60 @@ def list_findings(severity: str = typer.Option(None, help="Filter by severity"))
     except FileNotFoundError:
         console.print("[yellow]No findings generated yet. Run `cloudcost policy run` first.[/yellow]")
 
+@findings_app.command("summary")
+def summarize_findings(
+    input: str = typer.Option("data/findings.json", help="Path to findings JSON file"),
+    min_findings: int = typer.Option(1, help="Only show resources with at least this many findings"),
+):
+    """Roll up findings per resource, sorted by combined impact."""
+    from rich.table import Table
+
+    try:
+        with open(input, "r", encoding="utf-8") as f:
+            findings = json.load(f)
+    except FileNotFoundError:
+        console.print("[yellow]No findings generated yet. Run `cloudcost policy run` first.[/yellow]")
+        return
+
+    # A resource can trip several policies (e.g. stopped-but-billing AND
+    # untagged). Each finding stays independent in findings.json; this is
+    # just a rolled-up view for deciding which resource to fix first.
+    groups = {}
+    for f in findings:
+        resource_id = f.get("resource_id")
+        if not resource_id:
+            continue
+        group = groups.setdefault(resource_id, {"policies": [], "impact": 0.0})
+        group["policies"].append(f.get("policy_name", "unknown"))
+        group["impact"] += float(f.get("estimated_impact", 0.0) or 0.0)
+
+    rows = sorted(
+        ((rid, g) for rid, g in groups.items() if len(g["policies"]) >= min_findings),
+        key=lambda item: item[1]["impact"],
+        reverse=True,
+    )
+
+    if not rows:
+        console.print("[green]No findings to display![/green]")
+        return
+
+    table = Table(title=f"Findings by resource ({len(rows)} resources)")
+    table.add_column("Resource", overflow="fold")
+    table.add_column("Findings", justify="right")
+    table.add_column("Policies", overflow="fold")
+    table.add_column("Combined impact", justify="right")
+    for resource_id, g in rows:
+        table.add_row(
+            resource_id,
+            str(len(g["policies"])),
+            ", ".join(sorted(g["policies"])),
+            f"${g['impact']:,.2f}",
+        )
+    console.print(table)
+
+    total_impact = sum(g["impact"] for _, g in rows)
+    console.print(f"[blue]Total combined impact: ${total_impact:,.2f}[/blue]")
+
 @findings_app.command("notify")
 def notify_findings(
     webhook_url: str = typer.Option(..., help="Slack incoming webhook or generic webhook URL"),
