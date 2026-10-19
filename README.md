@@ -173,7 +173,7 @@ transforms:
         UsageDateTime: usage_date
 ```
 
-This was verified end-to-end against a real Azure Cost Management export (215 real cost line items, `cloudcost sync` + `cloudcost policy run` both succeeding and producing real findings) — see `cloudcost.azure-real.yml` for the full working example. AWS/OCI/Alibaba each need their own `column_map` matched to their real export schema; none of those have been verified against live data yet.
+This was verified end-to-end against a real Azure Cost Management export (215 real cost line items, `cloudcost sync` + `cloudcost policy run` both succeeding and producing real findings) — see `examples/cloudcost.azure-real.yml` for the full working example. AWS/OCI/Alibaba each need their own `column_map` matched to their real export schema; none of those have been verified against live data yet.
 
 **Independently re-verified from a completely fresh clone** (new `git clone`, new `uv venv`, new `uv pip install -e .`, no leftover state) against the same live export, confirming the fix isn't an artifact of the environment it was written in:
 

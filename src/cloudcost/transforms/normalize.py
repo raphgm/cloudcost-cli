@@ -21,7 +21,7 @@ class FocusNormalizeTransform:
         # of guessing at schemas, the pipeline config now declares the
         # mapping explicitly via this transform's own `config` block
         # (TransformConfig.config already existed in the schema; it was
-        # just never read). See cloudcost.azure-real.yml for a real
+        # just never read). See examples/cloudcost.azure-real.yml for a real
         # example verified against a live Azure Cost Management export.
         import datetime
 
