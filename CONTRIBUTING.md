@@ -27,7 +27,7 @@ Look at `idle_bastion` if you want a complete existing example:
 
 - `src/cloudcost/sources/azure/idle_bastion.py`
 - `policies/idle_bastion.sql`
-- `cloudcost.idle-bastion-real.yml`
+- `examples/cloudcost.idle-bastion-real.yml`
 - the `import cloudcost.sources.azure.idle_bastion` line in `runner.py`
 
 ## Minimal worked example
@@ -99,7 +99,7 @@ The pipeline load table name (`fact_idle_nat_gateways` above) must match what th
 ### 3. Live pipeline config
 
 ```yaml
-# cloudcost.idle-nat-gateways-real.yml
+# examples/cloudcost.idle-nat-gateways-real.yml
 version: "1"
 
 pipeline:
